@@ -1,0 +1,210 @@
+function onOpen() {
+ const ui = SpreadsheetApp.getUi();
+ const menu = ui.createMenu('Aish Gupta');
+ menu.addItem('Photo split', 'createNewGoogleDocs')
+ menu.addItem('Data doc', 'createDocFromSheet')
+ menu.addToUi();
+}
+
+function onFormSubmit() {
+  ScriptApp.newTrigger('sendConfirmationEmail').forSpreadsheet('1tztrD6fmYEHW3oyyl-DotnlVZDkHTuqvz27OZrSPjx0').onFormSubmit().create();
+}
+
+function sendConfirmationEmail(e) {
+
+  const subject = "submission report";
+  const body = getBody();
+  GmailApp.sendEmail('guptaaish2015@gmail.com', subject, body);
+  Logger.log(body);
+}
+
+function getBodySubmitted(){
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('data');
+  const rows = sheet.getDataRange().getValues();
+  var names = [];
+  var submitted = 'Submitted Clubs:\n\n';
+  for (var i in rows){
+    if (i==0) continue;
+    names.push(rows[i][1]);
+    submitted += rows[i][1];
+    submitted += '\n';
+  };
+  return [names, submitted];
+}
+
+function getBody(){
+
+  const [names,submitted] = getBodySubmitted();
+
+  const allClubs = ['Rotaract Club of Delhi Karma',
+    'Rotaract Club of Sonipat Youngsters',
+    'Rotaract Club of Inmantec',
+    'Rotaract Club of Dyal Singh College',
+    'Rotaract Club of Delhi City Nexus',
+    'Rotaract Club of Delhi City',
+    'Rotaract Club of Delhi NCR',
+    'Rotaract Club of GVMITM',
+    'Rotaract Club of Indirapuram Pariwar',
+    'Rotaract Club of OPJGU',
+    'Rotaract Club of Ghaziabad North',
+    'Rotaract Club of Ghaziabad Golflinks',
+  ];
+
+  var notSubmitted = 'Not Submitted Clubs:\n\n';
+
+  for (let i in allClubs){
+    if (names.includes(allClubs[i])){
+      //no
+    }else {
+      notSubmitted += allClubs[i];
+      notSubmitted += '\n';
+    }
+  }
+  return submitted + '\n\n' + notSubmitted;
+}
+
+function onTime() {
+  ScriptApp.newTrigger('createNewGoogleDocs').forSpreadsheet('1tztrD6fmYEHW3oyyl-DotnlVZDkHTuqvz27OZrSPjx0').create();
+  //ScriptApp.newTrigger('createDocFromSheet').forSpreadsheet('1tztrD6fmYEHW3oyyl-DotnlVZDkHTuqvz27OZrSPjx0').onTime().create();
+  Logger.log('time done')
+  GmailApp.sendEmail('guptaaish2015@gmail.com', "Time Trigger", getBodySubmitted());
+}
+
+
+ 
+function createDocFromSheet() {
+ const destinationFolder = DriveApp.getFolderById('15G30bBPamn_LjvPdcp_3F_tcMBeTWvgY');
+ 
+ const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('data');
+ const rows = sheet.getDataRange().getValues();
+ 
+ const dt = Utilities.formatDate(new Date(), "GMT+5:30", "dd/MM/yyyy");
+ 
+ const doc = DocumentApp.create('day ' + dt.charAt(1) );
+ const body = doc.getBody();
+ 
+ var text = body.editAsText();
+ text.insertText(0, 'Zone 3.');
+ 
+ // Make the first half of the document blue.
+ text.setForegroundColor(0, text.getText().length / 2, '#00FFFF');
+ 
+ 
+ const clubName = 'Club Name: ';
+ const projectTitle = 'Project Title:  ';
+ const collab = 'Collaborations:  ';
+ const audienceTarg = 'Audience Targeted:  ';
+ const noOfParticipants = 'Number of Participants:  ';
+ const description = 'Description:  \n';
+ 
+ function design(t,n) {
+ 
+   const lenText = text.getText().length;
+   const tLength = t.length;
+   const parReturn = lenText -tLength-1
+   //Logger.log(lenText);
+   Logger.log(t);
+   return [parReturn, parReturn + n];
+  
+ 
+ }
+ 
+ //makes the document from sheet
+ rows.forEach(function(row, index){
+   //Here we check if this row is the headers, if so we skip it
+   if (index === 0) return;
+ 
+  
+   //club name
+   text.appendText('\n\n');
+   text.appendText(clubName);
+   var boldDesign = design(clubName,clubName.length);
+   //Logger.log(boldDesign);
+   text.setBold(boldDesign[0],boldDesign[1],true);
+   text.appendText(row[1]);
+   //text.setBold(0,15,true);
+   text.appendText('\n\n');
+ 
+   //project title
+   text.appendText(projectTitle);
+   text.appendText(row[2]);
+   text.appendText('\n\n');
+ 
+   //collaborations
+   text.appendText(collab);
+   text.appendText(row[4]);
+   text.appendText('\n\n');
+ 
+   //audience targetted
+   text.appendText(audienceTarg);
+   text.appendText(row[5]);
+   text.appendText('\n\n');
+ 
+   //no. of participants
+   text.appendText(noOfParticipants);
+   text.appendText(row[6]);
+   text.appendText('\n\n');
+ 
+   //description
+   text.appendText(description);
+   text.appendText(row[7]);
+   body.appendPageBreak();
+ })
+ 
+ //var img = DriveApp.getFileById('1t2Nc9sghLR0my5qv6wNX4rCwB21Xk3tO').getBlob();
+ 
+ //doc.getChild(0).asParagraph().appendInlineImage(img);
+ 
+ DriveApp.getFileById(doc.getId()).moveTo(destinationFolder)
+ 
+ 
+}
+ 
+function getIdFromUrl(url) { return url.match(/[-\w]{27,}/); }
+ 
+function createNewGoogleDocs() {
+ 
+ // Parent folder for all application
+ //const applicationsFolder = DriveApp.getFolderById('1svlwyZsS4039Vhqmqgryh3yXQsmUVlEVy1i33QCGgvpaLMz3QpqPU60YDjwgjJBp_KAOoEPF');
+ 
+ const destinationFolder = DriveApp.getFolderById('15G30bBPamn_LjvPdcp_3F_tcMBeTWvgY')
+ 
+   //Here we store the sheet as a variable
+ const sheet = SpreadsheetApp
+   .getActiveSpreadsheet()
+   .getSheetByName('data')
+  //Now we get all of the values as a 2D array
+ const rows = sheet.getDataRange().getValues();
+  //Start processing each spreadsheet row
+ rows.forEach(function(row, index){
+   //Here we check if this row is the headers, if so we skip it
+   if (index === 0) return;
+   //Here we check if a document has already been generated by looking at 'Document Link', if so we skip it
+   if (!row[8]) return;
+ 
+   const folderIteratorChecker = destinationFolder.getFoldersByName(row[1]);
+   var applicantFolder;
+   //we check if the club already exists
+   if (folderIteratorChecker.hasNext()) {
+     applicantFolder = folderIteratorChecker.next();
+   }else {
+     applicantFolder = destinationFolder.createFolder(row[1]);
+   }
+ 
+   //photo row break apart
+   const photos = row[8].toString().split(', ');
+   const noOfPhotos = photos.length
+   //movement process
+   for(var counter = 0; counter < noOfPhotos; counter = counter + 1) {
+     DriveApp.getFileById(
+       getIdFromUrl(
+         photos[counter]
+       )
+     ).moveTo(applicantFolder);
+   }
+   //copy process
+ })
+ 
+}
+
+
