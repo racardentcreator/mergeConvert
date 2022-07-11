@@ -14,6 +14,8 @@ function copyScriptFromSampleDoc(body) {
   }
 }
 
+function getIdFromUrl(url) { return url.match(/[-\w]{27,}/); }
+
 function attachImage(body,id) {
   var image = DriveApp.getFileById(id).getBlob();
   //var paragraph = body.appendParagraph("\n");
