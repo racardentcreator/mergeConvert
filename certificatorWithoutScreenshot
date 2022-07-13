@@ -1,0 +1,75 @@
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  //=IFS(C2<37,32,C2<44,28,C2>43,25)
+  const menu = ui.createMenu('Aish Gupta');
+  menu.addItem('certificateCreator', 'createCertificate')
+  menu.addToUi();
+}
+
+//Make a copy of the sample file with project name as the name of the file and returns the file copied
+function copySampleSlideFile (projectName) {
+  destinationFolder = DriveApp.getFolderById('1ciDMveeKYSohY3S9Hy81xIvimoMoOzEB');
+  const newSlideFile = DriveApp.getFileById('13lyCI6hOQN_evrRyuuNFhJ5bJS9Mo5aajgSwfeHls60').makeCopy(projectName,destinationFolder);
+  const certificateSlideFile = SlidesApp.openById(newSlideFile.getId());
+
+  return certificateSlideFile;
+}
+
+//replaces the tags on the sample slide
+function replaceText(row, slide) {
+  slide.replaceAllText('{{club}}', row[1]);
+  slide.replaceAllText('{{project}}', row[2]);
+
+  let shape = slide.getShapes()[0];
+  if(row[1].length > 43) {
+    shape.getText().getTextStyle().setFontSize(25);
+  } else if (row[1].length > 35) {
+    shape.getText().getTextStyle().setFontSize(28);
+  }
+}
+
+function createCertificate() {
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  //Now we get all of the values as a 2D array
+  const rows = sheet.getDataRange().getValues();
+
+  //creating an array of all the projects that there are
+  var projectArray = [];
+  var certificateSlideFile;
+  var currentSlide;
+  var sampleSlide;
+
+  //Start processing each spreadsheet row
+  rows.forEach(function(row, index){
+
+    //Here we check if this row is the headers, if so we skip it
+    if (index === 0) return;
+
+    //check if projectArray already contains the name of the project
+    if (!projectArray.includes(row[2])) {
+
+      //checks if its the first project. If no, closes the initial file.
+      if(projectArray.length != 0) {
+        //generateScreenshots(row[2], certificateSlideFile);
+        certificateSlideFile.saveAndClose();
+      }
+
+      //pushes the project name into array and changes the certificator slide
+      projectArray.push(row[2]);
+      certificateSlideFile = copySampleSlideFile(row[2]);
+      sampleSlide = certificateSlideFile.getSlides()[0];
+    }
+
+    //make the copy of the demo slide
+    currentSlide = certificateSlideFile.appendSlide(sampleSlide);
+
+    //replaces the required text
+    replaceText(row, currentSlide);
+
+  })
+  //generateScreenshots(projectArray[projectArray.length - 1], certificateSlideFile);
+  certificateSlideFile.saveAndClose();
+}
+
+
